@@ -1,0 +1,78 @@
+import requests
+
+url_options = '?f=json&lang=en-CA'
+city_weather_url = 'collections/citypageweather-realtime/items'
+DATA = None
+CITY_LIST = None
+CURRENT_CITY = None
+
+def getData():  #query API and convert response into dictionary
+    url = f"https://api.weather.gc.ca/{city_weather_url}{url_options}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        print('Connected to API')
+        return data
+    
+    elif response.status_code == 404:
+        print('Cannot reach URL or content not found')
+    else:
+        print(f"Error has occurred. Code: {response.status_code}")
+
+def buildCityList():    #build a list of city names from API call
+    cities = []
+    for i in DATA['features']:
+         cities.append(i['properties']['name']['en'])
+
+def getCity():
+    features = DATA['features']
+    found = False
+
+    while found == False:
+        city_name = input("Please enter your city: ").title()
+        for i in features:  #loop through data to find English city name
+            if i['properties']['name']['en'] == city_name:
+                print('Found city')
+                found = True
+                city = i['properties']
+                return city
+        print('City was not found')
+
+def getCurrentConditions(city):
+        current_city = city
+        city_name = current_city['region']['en'] #How the city describes itself, e.g. "City of Calgary"
+        city_conditions = current_city['currentConditions']
+
+
+        # print(f'# of conditions: {len(city_conditions)}') # If len is not 10 then cloud condition is not reported.
+
+        print(f'Current conditions for {city_name}: ')
+        print(f'Current temperature: {city_conditions['temperature']['value']['en']}C')
+        print(f'Conditions: {city_conditions['condition']['en']}')
+        print(f'Relative Humidity: {city_conditions['relativeHumidity']['value']['en']}%')
+        print(f'Wind: Up to {city_conditions['wind']['speed']['value']['en']}km/h blowing from the {city_conditions['wind']['direction']['value']['en']}, gusting up to {city_conditions['wind']['gust']['value']['en']}km/h')
+        print(f'Air Pressure: {city_conditions['pressure']['value']['en']}kPa')
+        print(f'Dew Point: {city_conditions['dewpoint']['value']['en']}C')
+
+
+
+DATA = getData()
+CITY_LIST = buildCityList()
+CURRENT_CITY = getCity()
+getCurrentConditions(CURRENT_CITY)
+# getCurrentConditions('Calgary')
+
+
+#TODO
+# Find out why cloud conditions aren't used for some cities e.g. Edmonton
+#   Use the .get() function on dictionary to handle missing data: e.g. dict.get('key1', 'Text if not found')
+
+#TODO
+# Provide a weather forecast for the city: current, 5-day, and 10-day.
+#     Forecast info: high, low, avg. temp, precip. %, cloudy/sunny/overcast.
+
+#TODO
+# Sanitize API city names to remove french characters
+#   Alternatively, find a way to deal with the special characters
+#   Libraries: unidecode, unicodedata, or json.dumps
