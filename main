@@ -43,17 +43,24 @@ def getCurrentConditions(city):
         current_city = city
         city_name = current_city['region']['en'] #How the city describes itself, e.g. "City of Calgary"
         city_conditions = current_city['currentConditions']
-
-
-        # print(f'# of conditions: {len(city_conditions)}') # If len is not 10 then cloud condition is not reported.
+        
+        #Chaining dictionary get() calls to protect from missing fields in the data
+        temperature = city_conditions.get('temperature', {}).get('value', {}).get('en', 'No temperature data')                      #city_conditions['temperature']['value']['en']
+        cloud_conditions = city_conditions.get('condition', {}).get('en', 'No cloud cover data')                                    
+        humidity = city_conditions.get('relativeHumidity', {}).get('value', {}).get('en', 'No humidity data')                       
+        wind_speed = city_conditions.get('wind', {}).get('speed', {}).get('value', {}).get('en', 'No wind speed data')              
+        wind_direction = city_conditions.get('wind', {}).get('direction', {}).get('value', {}).get('en', 'No wind direction data')  
+        wind_gusts = city_conditions.get('wind', {}).get('gust', {}).get('value', {}).get('en', 'No wind gust data')                
+        air_pressure = city_conditions.get('pressure', {}).get('value', {}).get('en', 'No air pressure data')                       #city_conditions['pressure']['value']['en']
+        dew_point = city_conditions.get('dewpoint', {}).get('value', {}).get('en', 'No dew point data')                             #city_conditions['dewpoint']['value']['en']
 
         print(f'Current conditions for {city_name}: ')
-        print(f'Current temperature: {city_conditions['temperature']['value']['en']}C')
-        print(f'Conditions: {city_conditions['condition']['en']}')
-        print(f'Relative Humidity: {city_conditions['relativeHumidity']['value']['en']}%')
-        print(f'Wind: Up to {city_conditions['wind']['speed']['value']['en']}km/h blowing from the {city_conditions['wind']['direction']['value']['en']}, gusting up to {city_conditions['wind']['gust']['value']['en']}km/h')
-        print(f'Air Pressure: {city_conditions['pressure']['value']['en']}kPa')
-        print(f'Dew Point: {city_conditions['dewpoint']['value']['en']}C')
+        print(f'Current temperature: {temperature}C')
+        print(f'Conditions: {cloud_conditions}')
+        print(f'Relative Humidity: {humidity}%')
+        print(f'Wind: Up to {wind_speed}km/h blowing from the {wind_direction}, gusting up to {wind_gusts}km/h')
+        print(f'Air Pressure: {air_pressure}kPa')
+        print(f'Dew Point: {dew_point}C')
 
 
 
