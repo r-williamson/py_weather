@@ -1,15 +1,12 @@
 import requests
 import unicodedata  #used to anglicize French characters in city names, e.g. "Québec" to "Quebec"
 
-url_options = '?f=json&lang=en-CA'
-CITY_WEATHER_URL = 'collections/citypageweather-realtime/items'
-data = None
-CITY_LIST = None    #To be used to build a dropdown menu of cities in the GUI
-CURRENT_CITY = None
 
 """Fetches weather data from the API and returns it as a JSON object. Handles connection errors and prints appropriate messages based on the response status code."""
 def getData():  
-    url = f"https://api.weather.gc.ca/{CITY_WEATHER_URL}{url_options}"
+    URL_OPTIONS = '?f=json&lang=en-CA'
+    CITY_WEATHER_URL = 'collections/citypageweather-realtime/items'
+    url = f"https://api.weather.gc.ca/{CITY_WEATHER_URL}{URL_OPTIONS}"
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -23,9 +20,9 @@ def getData():
         print(f"Error has occurred. Code: {response.status_code}")
 
 """Santizes city names in the data and builds a list of city names from the API call"""
-def buildCityList():    
+def buildCityList(data):    
     cities = []
-    for i in DATA['features']:
+    for i in data['features']:
          city_name = i['properties']['name']['en']
          city_name = city_name.split('(')[0].strip()    #removes any text in parentheses, e.g. "City of Calgary (Alberta)" becomes "City of Calgary"
          if has_french_chars(city_name):
@@ -44,8 +41,8 @@ def has_french_chars(text):
     return any(char in FRENCH_CHARS for char in text)
 
 """Prompts the user to enter a city name and checks if it exists in the API data. If found, returns the city's weather data; otherwise, prompts again."""
-def getCity():
-    features = DATA['features']
+def getCity(data):
+    features = data['features']
     found = False
 
     while found == False:
@@ -88,12 +85,20 @@ def get5dayForecast():
 def get10dayForecast():
     None
 
-DATA = getData()
-CITY_LIST = buildCityList()
-CURRENT_CITY = getCity()
 
-getCurrentConditions(CURRENT_CITY)
+def main():
+    CITY_LIST = None    #To be used to build a dropdown menu of cities in the GUI
+    CURRENT_CITY = None
+    data = None
 
+    data = getData()
+    CITY_LIST = buildCityList(data)
+    CURRENT_CITY = getCity(data)
+    getCurrentConditions(CURRENT_CITY)
+
+
+if __name__ == "__main__":    
+    main()
 
 
 #TODO
