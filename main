@@ -1,10 +1,10 @@
 import requests
 import unicodedata  #used to anglicize French characters in city names, e.g. "Québec" to "Quebec"
-
+from datetime import datetime
 
 """Fetches weather data from the API and returns it as a JSON object. Handles connection errors and prints appropriate messages based on the response status code."""
 def getData():  
-    URL_OPTIONS = '?f=json&lang=en-CA'
+    URL_OPTIONS = '?limit=1000&f=json&lang=en-CA'
     CITY_WEATHER_URL = 'collections/citypageweather-realtime/items'
     url = f"https://api.weather.gc.ca/{CITY_WEATHER_URL}{URL_OPTIONS}"
     response = requests.get(url)
@@ -57,9 +57,8 @@ def getCity(data):
 
 """Extracts and prints the current weather conditions for the specified citys. Handles missing data gracefully by using chained get() calls with default values."""
 def getCurrentConditions(city):
-        current_city = city
-        city_name = current_city['region']['en'] #How the city describes itself, e.g. "City of Calgary"
-        city_conditions = current_city['currentConditions']
+        city_name = city['region']['en'] #How the city describes itself, e.g. "City of Calgary"
+        city_conditions = city['currentConditions']
         
         #Chaining dictionary get() calls to protect from missing fields in the data
         temperature = city_conditions.get('temperature', {}).get('value', {}).get('en', 'No temperature data')                      #city_conditions['temperature']['value']['en']
@@ -71,6 +70,7 @@ def getCurrentConditions(city):
         air_pressure = city_conditions.get('pressure', {}).get('value', {}).get('en', 'No air pressure data')                       #city_conditions['pressure']['value']['en']
         dew_point = city_conditions.get('dewpoint', {}).get('value', {}).get('en', 'No dew point data')                             #city_conditions['dewpoint']['value']['en']
 
+        print('==============================')
         print(f'Current conditions for {city_name}: ')
         print(f'Current temperature: {temperature}C')
         print(f'Conditions: {cloud_conditions}')
@@ -79,31 +79,50 @@ def getCurrentConditions(city):
         print(f'Air Pressure: {air_pressure}kPa')
         print(f'Dew Point: {dew_point}C')
 
-def get5dayForecast():
-    None
+def get24hourForecast(city):
+    hourlyForecast = city['hourlyForecastGroup']['hourlyForecasts']
+    for i in hourlyForecast:
+        timestamp = i['timestamp'].replace("Z", "+00:00")
+        hour_of_day = datetime.fromisoformat(timestamp).hour
+        condition = i.get('condition', {}).get('en', 'No condition data')
+        # windchill = i.get('windChill', {}).get('value', {}).get('en', 'N/A')
+        temperature = i.get('temperature', {}).get('value', {}).get('en', 'No temperature data')
+        wind_speed = i.get('wind', {}).get('speed', {}).get('value', {}).get('en', 'No wind speed data')
+        wind_direction = i.get('wind', {}).get('direction', {}).get('value', {}).get('en', 'No wind direction data')
+        
+        print('==============================')
+        print(f'24 hour forecast for {city["region"]["en"]}: ')
+        print('-----------------------------')
+        print(f'Hour: {hour_of_day}:00')
+        print(f'Cloud Conditions: {condition}')
+        # print(f'Wind Chill: {windchill}C')    #unsure how to handle a N/A windchill value and units
+        print(f'Temperature: {temperature}C')
+        print(f'Wind: Up to {wind_speed}km/h blowing from the {wind_direction}')
+        
+    
 
-def get10dayForecast():
+def get5dayForecast():
     None
 
 
 def main():
     CITY_LIST = None    #To be used to build a dropdown menu of cities in the GUI
-    CURRENT_CITY = None
+    current_city = None
     data = None
 
     data = getData()
     CITY_LIST = buildCityList(data)
-    CURRENT_CITY = getCity(data)
-    getCurrentConditions(CURRENT_CITY)
+    current_city = getCity(data)
+    getCurrentConditions(current_city)
+    get24hourForecast(current_city)
 
 
 if __name__ == "__main__":    
     main()
 
+#TODO
+# More work on the hourly forecast, is there a cleaner way to show all 24 hours?
 
 #TODO
-# There is a limit of 500 cities called from the API, find out if this is a setting that needs to change or a hard limit.
-
-#TODO
-# Provide a weather forecast for the city: current, 5-day, and 10-day.
+# Provide a 5-day weather forecast for the city:
 #     Forecast info: high, low, avg. temp, precip. %, cloudy/sunny/overcast.
